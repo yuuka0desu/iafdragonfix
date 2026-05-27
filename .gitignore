@@ -1,0 +1,29 @@
+# Build output
+build/
+out/
+
+# Compile-only dependencies (too large for git)
+libs/
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+run/
+logs/

@@ -1,0 +1,23 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+
+[[mods]]
+modId = "iafdragonfix"
+version = "1.0.0"
+displayName = "IAF Dragon Den Fix"
+description = "Fixes Ice and Fire dragon den generation causing crashes when entities spawn outside world border"
+
+[[dependencies.iafdragonfix]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.iafdragonfix]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.21)"
+ordering = "NONE"
+side = "BOTH"
