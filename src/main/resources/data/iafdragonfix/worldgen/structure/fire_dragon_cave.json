@@ -1,7 +1,7 @@
 {
   "type": "iafdragonfix:dragon_den",
   "dragon_type": "fire_dragon_cave",
-  "biomes": "#iafdragonfix:has_dragon_cave",
+  "biomes": "#iafdragonfix:has_fire_dragon_cave",
   "spawn_overrides": {},
   "step": "underground_structures"
 }
