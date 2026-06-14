@@ -32,9 +32,14 @@ public class DragonDenPiece extends StructurePiece {
     private final DragonType dragonType;
     private boolean generated = false;
 
+    // Max generation radius: roost decoration up to ~35 blocks, cave up to ~30 blocks
+    private static final int GEN_RADIUS = 48;
+
     public DragonDenPiece(BlockPos pos, DragonType dragonType) {
         super(IafDragonFix.DRAGON_DEN_PIECE_TYPE.get(), 0,
-                new BoundingBox(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()));
+                new BoundingBox(
+                        pos.getX() - GEN_RADIUS, pos.getY() - GEN_RADIUS, pos.getZ() - GEN_RADIUS,
+                        pos.getX() + GEN_RADIUS, pos.getY() + GEN_RADIUS, pos.getZ() + GEN_RADIUS));
         this.dragonType = dragonType;
     }
 
