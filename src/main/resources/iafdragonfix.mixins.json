@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "iafdragonfix.refmap.json",
   "mixins": [
-    "MixinWorldGenRegion"
+    "MixinWorldGenRegion",
+    "MixinWorldGenDragonCave",
+    "MixinWorldGenDragonRoosts"
   ],
   "client": [],
   "injectors": {
