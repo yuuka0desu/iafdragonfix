@@ -2,6 +2,7 @@ package com.iafdragonfix.structure;
 
 import com.iafdragonfix.DragonGenFlag;
 import com.iafdragonfix.IafDragonFix;
+import com.iafdragonfix.config.DragonDenConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.alexthe666.iceandfire.world.gen.*;
@@ -60,6 +61,22 @@ public class DragonDenPiece extends StructurePiece {
                             ChunkGenerator chunkGenerator, RandomSource random, BoundingBox box,
                             ChunkPos chunkPos, BlockPos pos) {
         if (generated) return;
+
+        // ── spawn-distance check ────────────────────────────────────────────
+        ServerLevel serverLevel = level.getLevel();
+        BlockPos spawn = serverLevel.getSharedSpawnPos();
+        BlockPos origin = new BlockPos(this.boundingBox.minX(), 0, this.boundingBox.minZ());
+        double distSq = spawn.distSqr(new BlockPos(origin.getX(), spawn.getY(), origin.getZ()));
+        int minDist = dragonType.isCave()
+                ? DragonDenConfig.caveSpawnDist.get()
+                : DragonDenConfig.roostSpawnDist.get();
+        if (minDist > 0 && distSq < (double) minDist * minDist) {
+            IafDragonFix.LOGGER.debug("Skipping {} – too close to spawn ({} < {} blocks)",
+                    dragonType, (int) Math.sqrt(distSq), minDist);
+            generated = true; // mark done so we never retry
+            return;
+        }
+
         generated = true;
 
         try {

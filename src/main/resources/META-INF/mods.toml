@@ -4,7 +4,7 @@ license = "MIT"
 
 [[mods]]
 modId = "iafdragonfix"
-version = "1.0.0"
+version = "2.0.0"
 displayName = "IAF Dragon Den Fix"
 description = "Fixes Ice and Fire dragon den generation causing crashes when entities spawn outside world border"
 

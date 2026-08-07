@@ -1,5 +1,6 @@
 package com.iafdragonfix;
 
+import com.iafdragonfix.config.DragonDenConfig;
 import com.iafdragonfix.structure.DragonDenPiece;
 import com.iafdragonfix.structure.DragonDenStructure;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +37,7 @@ public class IafDragonFix {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         STRUCTURE_TYPES.register(modBus);
         STRUCTURE_PIECE_TYPES.register(modBus);
+        DragonDenConfig.register();
         LOGGER.info("IAF Dragon Fix loaded - dragon dens registered as structures");
     }
 }
