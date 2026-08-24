@@ -49,6 +49,19 @@ public class DragonDenPiece extends StructurePiece {
         this.generated = tag.getBoolean("Generated");
     }
 
+    /**
+     * The actual generation position is the centre of the (large) bounding box,
+     * which equals the BlockPos passed to the constructor by
+     * {@code DragonDenStructure.findGenerationPoint}.  Using {@code boundingBox.minX()}
+     * would be wrong because that is {@code pos - GEN_RADIUS}.
+     */
+    private BlockPos center() {
+        return new BlockPos(
+                (this.boundingBox.minX() + this.boundingBox.maxX()) / 2,
+                (this.boundingBox.minY() + this.boundingBox.maxY()) / 2,
+                (this.boundingBox.minZ() + this.boundingBox.maxZ()) / 2);
+    }
+
     @Override
     protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
         tag.putString("DragonType", dragonType.name());
@@ -61,7 +74,8 @@ public class DragonDenPiece extends StructurePiece {
                             ChunkPos chunkPos, BlockPos pos) {
         if (generated) return;
 
-        BlockPos origin = new BlockPos(this.boundingBox.minX(), 0, this.boundingBox.minZ());
+        BlockPos center = center();
+        BlockPos origin = new BlockPos(center.getX(), 0, center.getZ());
 
         // ── spawn-distance check (delegated to IAF) ──────────────────────────
         if (!IafWorldRegistry.isFarEnoughFromSpawn(level, origin)) {
@@ -72,9 +86,8 @@ public class DragonDenPiece extends StructurePiece {
 
         // ── fluid check (IAF: roosts never generate underwater) ────────────
         if (dragonType.isRoost()) {
-            BlockPos surface = new BlockPos(this.boundingBox.minX(), this.boundingBox.minY(), this.boundingBox.minZ());
-            if (!level.getFluidState(surface.above()).isEmpty()) {
-                IafDragonFix.LOGGER.debug("Skipping {} – submerged in fluid at {}", dragonType, surface);
+            if (!level.getFluidState(center.above()).isEmpty()) {
+                IafDragonFix.LOGGER.debug("Skipping {} – submerged in fluid at {}", dragonType, center);
                 generated = true;
                 return;
             }
@@ -107,7 +120,7 @@ public class DragonDenPiece extends StructurePiece {
     }
 
     private void generateCave(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random) {
-        BlockPos origin = new BlockPos(this.boundingBox.minX(), 0, this.boundingBox.minZ());
+        BlockPos origin = center();
 
         // Replicate Y-coordinate finding logic from WorldGenDragonCave.m_142674_
         int y = 40;
@@ -170,7 +183,7 @@ public class DragonDenPiece extends StructurePiece {
     }
 
     private void generateRoost(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random) {
-        BlockPos origin = new BlockPos(this.boundingBox.minX(), this.boundingBox.minY(), this.boundingBox.minZ());
+        BlockPos origin = center();
 
         // Get IAF feature instance
         WorldGenDragonRoosts feature = getRoostFeature();

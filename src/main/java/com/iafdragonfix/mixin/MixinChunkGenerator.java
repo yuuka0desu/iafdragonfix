@@ -1,9 +1,11 @@
 package com.iafdragonfix.mixin;
 
+import com.github.alexthe666.iceandfire.IafConfig;
 import com.iafdragonfix.structure.ScatteredPlacement;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.StructureManager;
@@ -64,6 +66,16 @@ public abstract class MixinChunkGenerator {
             Set<Holder<Structure>> structures, LevelReader level, StructureManager structureManager,
             int chunkX, int chunkZ, int radius, boolean skipKnownStructures, long seed,
             ScatteredPlacement scattered) {
+        // Mirror the spawn-distance check performed in DragonDenPiece.postProcess
+        // so /locate never reports a den that generation would later skip.
+        BlockPos spawn = null;
+        double minSpawnDistSq = 0.0D;
+        if (level instanceof ServerLevel serverLevel) {
+            spawn = serverLevel.getSharedSpawnPos();
+            double limit = IafConfig.dangerousWorldGenDistanceLimit;
+            minSpawnDistSq = limit * limit;
+        }
+
         for (int i = -radius; i <= radius; i++) {
             boolean iEdge = (i == -radius || i == radius);
             for (int j = -radius; j <= radius; j++) {
@@ -75,6 +87,14 @@ public abstract class MixinChunkGenerator {
                 int cz = chunkZ + j;
                 if (!scattered.isScatteredAt(seed, cx, cz)) {
                     continue;
+                }
+                if (spawn != null) {
+                    BlockPos center = new ChunkPos(cx, cz).getMiddleBlockPosition(0);
+                    double dx = center.getX() - spawn.getX();
+                    double dz = center.getZ() - spawn.getZ();
+                    if (dx * dx + dz * dz < minSpawnDistSq) {
+                        continue;
+                    }
                 }
                 Pair<BlockPos, Holder<Structure>> result = m_223198_(
                         structures, level, structureManager, skipKnownStructures,
