@@ -7,9 +7,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType;
 
@@ -21,10 +24,12 @@ import java.util.Optional;
  * occasional clusters (trimmed by the 300-block same-type separation check that
  * happens later in {@code DragonDenPiece}).
  *
- * <p>Unlike {@code RandomSpreadStructurePlacement} there is no grid, so the
- * result is exactly the "random scatter" behavior of the vanilla IAF Feature.</p>
+ * <p>This extends {@link RandomSpreadStructurePlacement} so vanilla {@code /locate}
+ * recognises the type.  {@code spacing()} is forced to 1, {@code getPotentialStructureChunk}
+ * returns its input, and {@code isPlacementChunk} does the deterministic 1-in-N roll
+ * from the world seed — so the location can always be reverse-resolved from the seed.</p>
  */
-public class ScatteredPlacement extends StructurePlacement {
+public class ScatteredPlacement extends RandomSpreadStructurePlacement {
 
     public static final int CAVE_SALT = 198273645;
     public static final int ROOST_SALT = 372918564;
@@ -48,20 +53,45 @@ public class ScatteredPlacement extends StructurePlacement {
                               int salt,
                               Optional<StructurePlacement.ExclusionZone> exclusionZone,
                               int chance) {
-        super(locateOffset, frequencyReductionMethod, frequency, salt, exclusionZone);
+        super(locateOffset, frequencyReductionMethod, frequency, salt, exclusionZone,
+                1, 1, RandomSpreadType.LINEAR);
         this.chance = chance;
     }
 
     @Override
+    public int spacing() {
+        return 1;
+    }
+
+    @Override
+    public int separation() {
+        return 1;
+    }
+
+    @Override
+    public ChunkPos getPotentialStructureChunk(long seed, int chunkX, int chunkZ) {
+        return new ChunkPos(chunkX, chunkZ);
+    }
+
+    @Override
     protected boolean isPlacementChunk(ChunkGeneratorStructureState state, int chunkX, int chunkZ) {
-        WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
-        random.setLargeFeatureWithSalt(state.getLevelSeed(), chunkX, chunkZ, salt());
-        return random.nextInt(effectiveChance()) == 0;
+        return isScatteredAt(state.getLevelSeed(), chunkX, chunkZ);
     }
 
     @Override
     public StructurePlacementType<?> type() {
         return IafDragonFix.SCATTERED_PLACEMENT_TYPE.get();
+    }
+
+    /**
+     * Pure, world-state-free roll for one chunk: {@code nextInt(chance) == 0} seeded
+     * from the world seed + chunk + salt.  Used by both chunk generation and /locate
+     * reverse resolution, so the two always agree.
+     */
+    public boolean isScatteredAt(long seed, int chunkX, int chunkZ) {
+        WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
+        random.setLargeFeatureWithSalt(seed, chunkX, chunkZ, salt());
+        return random.nextInt(effectiveChance()) == 0;
     }
 
     /**

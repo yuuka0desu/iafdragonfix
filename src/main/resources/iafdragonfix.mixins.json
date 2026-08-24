@@ -6,7 +6,8 @@
   "mixins": [
     "MixinWorldGenRegion",
     "MixinWorldGenDragonCave",
-    "MixinWorldGenDragonRoosts"
+    "MixinWorldGenDragonRoosts",
+    "MixinChunkGenerator"
   ],
   "client": [],
   "injectors": {
