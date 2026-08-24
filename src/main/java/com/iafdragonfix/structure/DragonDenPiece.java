@@ -2,20 +2,16 @@ package com.iafdragonfix.structure;
 
 import com.iafdragonfix.DragonGenFlag;
 import com.iafdragonfix.IafDragonFix;
-import com.iafdragonfix.config.DragonDenConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.alexthe666.iceandfire.world.gen.*;
+import com.github.alexthe666.iceandfire.world.IafWorldData.FeatureType;
 import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -23,14 +19,12 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructurePieceAccessor;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.server.level.ServerLevel;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Optional;
 
 public class DragonDenPiece extends StructurePiece {
@@ -67,18 +61,12 @@ public class DragonDenPiece extends StructurePiece {
                             ChunkPos chunkPos, BlockPos pos) {
         if (generated) return;
 
-        // ── spawn-distance check ────────────────────────────────────────────
-        ServerLevel serverLevel = level.getLevel();
-        BlockPos spawn = serverLevel.getSharedSpawnPos();
         BlockPos origin = new BlockPos(this.boundingBox.minX(), 0, this.boundingBox.minZ());
-        double distSq = spawn.distSqr(new BlockPos(origin.getX(), spawn.getY(), origin.getZ()));
-        int minDist = dragonType.isCave()
-                ? DragonDenConfig.caveSpawnDist.get()
-                : DragonDenConfig.roostSpawnDist.get();
-        if (minDist > 0 && distSq < (double) minDist * minDist) {
-            IafDragonFix.LOGGER.debug("Skipping {} – too close to spawn ({} < {} blocks)",
-                    dragonType, (int) Math.sqrt(distSq), minDist);
-            generated = true; // mark done so we never retry
+
+        // ── spawn-distance check (delegated to IAF) ──────────────────────────
+        if (!IafWorldRegistry.isFarEnoughFromSpawn(level, origin)) {
+            IafDragonFix.LOGGER.debug("Skipping {} – too close to spawn", dragonType);
+            generated = true;
             return;
         }
 
@@ -92,10 +80,11 @@ public class DragonDenPiece extends StructurePiece {
             }
         }
 
-        // ── cross-type separation (IAF: Dangerous World Gen Dist Seperation) ──
-        int crossMin = DragonDenConfig.crossTypeSeparation.get();
-        if (crossMin > 0 && !isFarEnoughFromOtherType(serverLevel, structureManager, origin, crossMin)) {
-            IafDragonFix.LOGGER.debug("Skipping {} – too close to other dragon dens (< {} blocks)", dragonType, crossMin);
+        // ── same-type separation (delegated to IAF: Dangerous World Gen Dist Seperation) ──
+        String featureId = dragonType.isCave() ? "dragon_cave" : "dragon_roost";
+        FeatureType featureType = dragonType.isCave() ? FeatureType.UNDERGROUND : FeatureType.SURFACE;
+        if (!IafWorldRegistry.isFarEnoughFromDangerousGen(level, origin, featureId, featureType)) {
+            IafDragonFix.LOGGER.debug("Skipping {} – too close to another {} den", dragonType, featureType);
             generated = true;
             return;
         }
@@ -115,53 +104,6 @@ public class DragonDenPiece extends StructurePiece {
         } finally {
             DragonGenFlag.disable();
         }
-    }
-
-    private static final List<ResourceLocation> CAVE_STRUCTURES = List.of(
-            new ResourceLocation(IafDragonFix.MODID, "fire_dragon_cave"),
-            new ResourceLocation(IafDragonFix.MODID, "ice_dragon_cave"),
-            new ResourceLocation(IafDragonFix.MODID, "lightning_dragon_cave"));
-
-    private static final List<ResourceLocation> ROOST_STRUCTURES = List.of(
-            new ResourceLocation(IafDragonFix.MODID, "fire_dragon_roost"),
-            new ResourceLocation(IafDragonFix.MODID, "ice_dragon_roost"),
-            new ResourceLocation(IafDragonFix.MODID, "lightning_dragon_roost"));
-
-    /**
-     * IAF keeps every generated dangerous structure in IafWorldData and enforces
-     * Dangerous World Gen Dist Seperation (300 blocks) between ALL of them,
-     * including across cave/roost types.  We approximate the same rule by
-     * scanning nearby chunk structure-starts for structures of the other kind.
-     */
-    private boolean isFarEnoughFromOtherType(ServerLevel level, net.minecraft.world.level.StructureManager sm,
-                                             BlockPos origin, int minBlocks) {
-        int r = (minBlocks + 15) / 16;
-        int cx = origin.getX() >> 4;
-        int cz = origin.getZ() >> 4;
-        long minSq = (long) minBlocks * minBlocks;
-
-        List<ResourceLocation> others = dragonType.isCave() ? ROOST_STRUCTURES : CAVE_STRUCTURES;
-        var registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
-
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dz = -r; dz <= r; dz++) {
-                ChunkPos cp = new ChunkPos(cx + dx, cz + dz);
-                // cheap circle filter on the chunk center
-                BlockPos center = cp.getMiddleBlockPosition(0);
-                long ddx = center.getX() - origin.getX();
-                long ddz = center.getZ() - origin.getZ();
-                if (ddx * ddx + ddz * ddz > minSq) continue;
-
-                for (ResourceLocation id : others) {
-                    Structure s = registry.get(id);
-                    if (s == null) continue;
-                    if (sm.getStructureWithPieceAt(center, s) != null) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
     }
 
     private void generateCave(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random) {

@@ -14,11 +14,8 @@
     }
   ],
   "placement": {
-    "type": "minecraft:random_spread",
-    "spacing": 26,
-    "separation": 8,
+    "type": "iafdragonfix:scattered_random",
     "salt": 198273645,
-    "frequency": 1.0,
-    "frequency_reduction_method": "default"
+    "chance": 260
   }
 }
