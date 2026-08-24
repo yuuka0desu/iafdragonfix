@@ -37,9 +37,9 @@ public class DragonDenConfig {
         b.comment("Dragon Cave – underground dens.");
         b.push("cave");
         caveSpawnDist   = b.comment("Minimum blocks from world spawn").defineInRange("spawnDistance", 800, 0, 100000);
-        caveSpacing     = b.comment("Average chunks between attempts").defineInRange("spacing", 32, 1, 1000);
+        caveSpacing     = b.comment("Average chunks between attempts").defineInRange("spacing", 26, 1, 1000);
         caveSeparation  = b.comment("Minimum chunks between dens").defineInRange("separation", 8, 1, 1000);
-        caveFrequency   = b.comment("0.0 – 1.0 chance per chunk").defineInRange("frequency", 0.6, 0.0, 1.0);
+        caveFrequency   = b.comment("0.0 – 1.0 chance per chunk").defineInRange("frequency", 1.0, 0.0, 1.0);
         b.pop();
 
         crossTypeSeparation = b
