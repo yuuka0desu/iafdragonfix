@@ -20,6 +20,9 @@ public class DragonDenConfig {
     public static ForgeConfigSpec.IntValue caveSeparation;
     public static ForgeConfigSpec.DoubleValue caveFrequency;
 
+    // ── Cross-type separation (IAF: Dangerous World Gen Dist Seperation = 300) ──
+    public static ForgeConfigSpec.IntValue crossTypeSeparation;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -38,6 +41,10 @@ public class DragonDenConfig {
         caveSeparation  = b.comment("Minimum chunks between dens").defineInRange("separation", 8, 1, 1000);
         caveFrequency   = b.comment("0.0 – 1.0 chance per chunk").defineInRange("frequency", 0.6, 0.0, 1.0);
         b.pop();
+
+        crossTypeSeparation = b
+                .comment("Minimum blocks between a cave and a roost (IAF Dangerous World Gen Dist Seperation default: 300)")
+                .defineInRange("crossTypeSeparation", 300, 0, 100000);
 
         SERVER_SPEC = b.build();
     }
