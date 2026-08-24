@@ -1,7 +1,15 @@
 {
   "values": [
-    "#minecraft:is_savanna",
+    "#minecraft:is_jungle",
     "#minecraft:is_badlands",
-    "#minecraft:is_jungle"
+    "#minecraft:is_savanna",
+    "terralith:ashen_savanna",
+    "terralith:savanna_badlands",
+    "terralith:savanna_slopes",
+    "byg:guiana_shield",
+    "byg:temperate_rainforest",
+    "byg:tropical_rainforest",
+    "byg:jacaranda_forest",
+    "byg:sierra_badlands"
   ]
 }
