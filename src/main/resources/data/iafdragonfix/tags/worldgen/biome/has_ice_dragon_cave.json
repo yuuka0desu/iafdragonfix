@@ -1,8 +1,5 @@
 {
   "values": [
-    "#forge:is_cold/overworld",
-    "byg:shattered_glacier",
-    "byg:frosted_taiga",
-    "byg:frosted_coniferous_forest"
+    "#forge:is_cold/overworld"
   ]
 }

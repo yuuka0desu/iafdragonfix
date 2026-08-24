@@ -1,12 +1,6 @@
 {
   "values": [
     "#forge:is_desert",
-    "#forge:is_plains",
-    "terralith:steppe",
-    "byg:rose_fields",
-    "byg:prairie",
-    "byg:firecracker_shrubland",
-    "byg:autumnal_valley",
-    "byg:lush_stacks"
+    "#forge:is_plains"
   ]
 }
